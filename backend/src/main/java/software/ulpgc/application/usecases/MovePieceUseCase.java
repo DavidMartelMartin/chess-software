@@ -10,10 +10,12 @@ import java.util.Map;
 public class MovePieceUseCase implements MovePiecePort {
 
     private Board currentBoard;
+    private Color currentTurn;
     private final Map<PieceType, MoveRule> rules;
 
     public MovePieceUseCase(Board initialBoard) {
         this.currentBoard = initialBoard;
+        this.currentTurn = Color.WHITE;
         this.rules = Map.of(
                 PieceType.PAWN, new PawnMoveRule(),
                 PieceType.KNIGHT, new KnightMoveRule(),
@@ -34,6 +36,10 @@ public class MovePieceUseCase implements MovePiecePort {
         Piece piece = currentBoard.getPieceAt(from)
                 .orElseThrow(() -> new IllegalArgumentException("No piece found at the source coordinate"));
 
+        if (piece.color()!= currentTurn) {
+            throw new IllegalArgumentException("It is not your turn");
+        }
+
         MoveRule rule = rules.get(piece.type());
         if (!rule.isValid(move, currentBoard)) {
             throw new IllegalArgumentException("Invalid move for this piece");
@@ -44,6 +50,7 @@ public class MovePieceUseCase implements MovePiecePort {
         newPieces.put(to, piece);
 
         this.currentBoard = new Board(newPieces);
+        this.currentTurn = (this.currentTurn == Color.WHITE) ? Color.BLACK : Color.WHITE;
         return this.currentBoard;
     }
 
