@@ -47,11 +47,35 @@ public class MovePieceUseCase implements MovePiecePort {
 
         Map<Coordinate, Piece> newPieces = new HashMap<>(currentBoard.getPieces());
         newPieces.remove(from);
-        newPieces.put(to, piece);
+
+        if (piece.type() == PieceType.PAWN && isPromotionRank(piece.color(), to.rank())) {
+            PieceType promotionType = parsePromotion(command.promotion());
+            newPieces.put(to, new Piece(promotionType, piece.color()));
+        } else {
+            newPieces.put(to, piece);
+        }
 
         this.currentBoard = new Board(newPieces);
         this.currentTurn = (this.currentTurn == Color.WHITE) ? Color.BLACK : Color.WHITE;
         return this.currentBoard;
+    }
+
+    private boolean isPromotionRank(Color color, int rank) {
+        return (color == Color.WHITE && rank == 8) || (color == Color.BLACK && rank == 1);
+    }
+
+    private PieceType parsePromotion(String promotion) {
+        if (promotion == null || promotion.isBlank()) {
+            return PieceType.QUEEN;
+        }
+
+        return switch (promotion.toUpperCase()) {
+            case "Q" -> PieceType.QUEEN;
+            case "R" -> PieceType.ROOK;
+            case "B" -> PieceType.BISHOP;
+            case "N" -> PieceType.KNIGHT;
+            default -> throw new IllegalArgumentException("Invalid promotion piece. Use Q, R, B or N");
+        };
     }
 
     private Coordinate parseCoordinate(String text) {
