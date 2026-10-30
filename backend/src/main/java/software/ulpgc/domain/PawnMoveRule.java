@@ -32,6 +32,20 @@ public class PawnMoveRule implements MoveRule{
             if (targetPieceOpt.isPresent()) {
                 return targetPieceOpt.get().color() != pawn.color();
             }
+
+            Move lastMove = board.getLastMove();
+            if (lastMove != null) {
+                Coordinate lastFrom = lastMove.from();
+                Coordinate lastTo = lastMove.to();
+
+                Optional<Piece> lastPiece = board.getPieceAt(lastTo);
+
+                if (lastPiece.isPresent() && lastPiece.get().type() == PieceType.PAWN) {
+                    return Math.abs(lastTo.rank() - lastFrom.rank()) == 2 &&
+                            lastTo.file() == move.to().file() &&
+                            lastTo.rank() == move.from().rank();
+                }
+            }
         }
 
         return false;

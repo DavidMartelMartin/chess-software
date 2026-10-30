@@ -63,11 +63,15 @@ public class MovePieceUseCase implements MovePiecePort {
 
             newPieces.remove(rookSource);
             newPieces.put(rookTarget, new Piece(PieceType.ROOK, piece.color(), true));
+        } else if (piece.type() == PieceType.PAWN && from.file() != to.file() && currentBoard.getPieceAt(to).isEmpty()) {
+            Coordinate capturedPawnCoord = new Coordinate(to.file(), from.rank());
+            newPieces.remove(capturedPawnCoord);
+            newPieces.put(to, new Piece(PieceType.PAWN, piece.color(), true));
         } else {
             newPieces.put(to, new Piece(piece.type(), piece.color(), true));
         }
 
-        this.currentBoard = new Board(newPieces);
+        this.currentBoard = new Board(newPieces, move);
         this.currentTurn = (this.currentTurn == Color.WHITE) ? Color.BLACK : Color.WHITE;
         return this.currentBoard;
     }
