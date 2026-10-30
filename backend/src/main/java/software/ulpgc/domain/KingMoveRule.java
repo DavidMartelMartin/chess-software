@@ -9,19 +9,47 @@ public class KingMoveRule implements MoveRule {
         int fileDistance = Math.abs(move.to().file() - move.from().file());
         int rankDistance = Math.abs(move.to().rank() - move.from().rank());
 
-        if (fileDistance > 1 || rankDistance > 1) return false;
+        int dx = move.to().file() - move.from().file();
 
         if (fileDistance == 0 && rankDistance == 0) return false;
 
-        Optional<Piece> sourcePiece = board.getPieceAt(move.from());
-        Optional<Piece> targetPiece = board.getPieceAt(move.to());
+        Optional<Piece> sourcePieceOpt = board.getPieceAt(move.from());
+        if (sourcePieceOpt.isEmpty()) return false;
 
-        if (sourcePiece.isEmpty()) return false;
+        Piece king = sourcePieceOpt.get();
 
-        if (targetPiece.isPresent()) {
-            return sourcePiece.get().color() != targetPiece.get().color();
+        if (fileDistance <= 1 && rankDistance <= 1) {
+            Optional<Piece> targetPiece = board.getPieceAt(move.to());
+
+            if (targetPiece.isPresent()) {
+                return king.color() != targetPiece.get().color();
+            }
+
+            return true;
         }
 
-        return true;
+        if (fileDistance == 2 && rankDistance == 0) {
+            if (king.hasMoved()) return false;
+
+            char rookFile = (dx > 0) ? 'h' : 'a';
+            Coordinate rookCord = new Coordinate(rookFile, move.from().rank());
+
+            Optional<Piece> rookOpt = board.getPieceAt(rookCord);
+
+            if (rookOpt.isEmpty() || rookOpt.get().type() != PieceType.ROOK || rookOpt.get().hasMoved()) {
+                return false;
+            }
+
+            int step = (dx > 0) ? 1 : -1;
+            for (char f = (char) (move.from().file() + step); f != rookFile; f += step) {
+                if (board.getPieceAt(new Coordinate(f, move.from().rank())).isPresent()) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 }

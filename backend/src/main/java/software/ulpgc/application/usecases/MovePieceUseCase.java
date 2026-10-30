@@ -50,9 +50,21 @@ public class MovePieceUseCase implements MovePiecePort {
 
         if (piece.type() == PieceType.PAWN && isPromotionRank(piece.color(), to.rank())) {
             PieceType promotionType = parsePromotion(command.promotion());
-            newPieces.put(to, new Piece(promotionType, piece.color()));
+            newPieces.put(to, new Piece(promotionType, piece.color(), true));
+        } else if (piece.type() == PieceType.KING && Math.abs(to.file() - from.file()) == 2){
+            newPieces.put(to, new Piece(PieceType.KING, piece.color(), true));
+
+            int dx = to.file() - from.file();
+            char rookSourceFile = (dx > 0) ? 'h' : 'a';
+            char rookTargetFile = (dx > 0) ? 'f': 'd';
+
+            Coordinate rookSource = new Coordinate(rookSourceFile, from.rank());
+            Coordinate rookTarget = new Coordinate(rookTargetFile, from.rank());
+
+            newPieces.remove(rookSource);
+            newPieces.put(rookTarget, new Piece(PieceType.ROOK, piece.color(), true));
         } else {
-            newPieces.put(to, piece);
+            newPieces.put(to, new Piece(piece.type(), piece.color(), true));
         }
 
         this.currentBoard = new Board(newPieces);
