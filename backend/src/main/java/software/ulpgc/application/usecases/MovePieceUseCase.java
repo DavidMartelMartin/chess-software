@@ -71,8 +71,15 @@ public class MovePieceUseCase implements MovePiecePort {
             newPieces.put(to, new Piece(piece.type(), piece.color(), true));
         }
 
-        this.currentBoard = new Board(newPieces, move);
+        Board tentativeBoard = new Board(newPieces, move);
+
+        if (isKingInCheck(tentativeBoard, currentTurn)){
+            throw new IllegalArgumentException("Invalid move: You cannot put or leave your king in check");
+        }
+
+        this.currentBoard = tentativeBoard;
         this.currentTurn = (this.currentTurn == Color.WHITE) ? Color.BLACK : Color.WHITE;
+
         return this.currentBoard;
     }
 
@@ -103,5 +110,34 @@ public class MovePieceUseCase implements MovePiecePort {
         int rank = Character.getNumericValue(text.charAt(1));
 
         return new Coordinate(file, rank);
+    }
+
+    private boolean isKingInCheck(Board board, Color kingColor) {
+        Coordinate kingPosition = null;
+
+        for (Map.Entry<Coordinate, Piece> entry : board.getPieces().entrySet()) {
+            if (entry.getValue().type() == PieceType.KING && entry.getValue().color() == kingColor) {
+                kingPosition = entry.getKey();
+                break;
+            }
+        }
+
+        if (kingPosition == null) return false;
+
+        Color opponentColor = (kingColor == Color.WHITE) ? Color.BLACK : Color.WHITE;
+        for (Map.Entry<Coordinate, Piece> entry : board.getPieces().entrySet()) {
+            Piece piece = entry.getValue();
+
+            if (piece.color() == opponentColor) {
+                MoveRule rule = rules.get(piece.type());
+
+                Move attackMove = new Move(entry.getKey(), kingPosition);
+                if (rule.isValid(attackMove, board)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
