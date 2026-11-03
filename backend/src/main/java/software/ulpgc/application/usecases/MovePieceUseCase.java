@@ -80,6 +80,15 @@ public class MovePieceUseCase implements MovePiecePort {
         this.currentBoard = tentativeBoard;
         this.currentTurn = (this.currentTurn == Color.WHITE) ? Color.BLACK : Color.WHITE;
 
+        if (!hasAvailableMoves(this.currentBoard, this.currentTurn)) {
+            if (isKingInCheck(this.currentBoard, this.currentTurn)) {
+                String winner = (this.currentTurn == Color.WHITE) ? "Black": "White";
+                throw new GameOverException("CHECKMATE! " + winner + " wins.", this.currentBoard);
+            } else {
+                throw new GameOverException("STALEMATE! The game is a draw.", this.currentBoard);
+            }
+        }
+
         return this.currentBoard;
     }
 
@@ -134,6 +143,35 @@ public class MovePieceUseCase implements MovePiecePort {
                 Move attackMove = new Move(entry.getKey(), kingPosition);
                 if (rule.isValid(attackMove, board)) {
                     return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasAvailableMoves(Board board, Color color) {
+        for (Map.Entry<Coordinate, Piece> entry : board.getPieces().entrySet()) {
+            if (entry.getValue().color() != color) continue;
+
+            Coordinate from = entry.getKey();
+            Piece piece = entry.getValue();
+            MoveRule rule = rules.get(piece.type());
+
+            for (char file = 'a'; file <= 'h'; file++) {
+                for (int rank = 1; rank <= 8; rank++) {
+                    Coordinate to = new Coordinate(file, rank);
+                    Move move = new Move(from, to);
+
+                    if (rule.isValid(move, board)) {
+                        Map<Coordinate, Piece> simPieces = new HashMap<>(board.getPieces());
+
+                        simPieces.remove(from);
+                        simPieces.put(to, new Piece(piece.type(), piece.color(), true));
+                        Board simBoard = new Board(simPieces, move);
+
+                        if (!isKingInCheck(simBoard, color)) return true;
+                    }
                 }
             }
         }

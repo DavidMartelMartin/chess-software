@@ -41,6 +41,11 @@ public class ConsoleChessAdapter {
                 System.out.println("Move successful!");
             } catch (IllegalArgumentException e) {
                 System.out.println("ERROR: " + e.getMessage());
+            } catch (GameOverException e) {
+                System.out.println("\nMove successful");
+                printBoard(e.getFinalBoard());
+                System.out.println("\n" + e.getMessage());
+                break;
             }
         }
     }
